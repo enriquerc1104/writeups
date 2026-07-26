@@ -59,31 +59,26 @@ Tenemos activos los siguientes puertos:
 
 # 🌐 Enumeración Web
 
-```text
 Vemos que en la web solo hay un campo para introducir el email, aquí no hay nada interesante
-```
+
 ![Web principal](images/03_web.png)
 
 ## Dominio
 
-```text
 Recordamos que tenemos abierto el puerto 53, con ello vamos a intentar hacer un ataque de transferencia de zona que consistirá en la busqueda de algun dominio expuesto
-```
 
 ```bash
 dig @<IP> -x <IP>
 ```
-```text
+
 Vemos que el registro PTR nos ha devuelto un dominio llamado trick.htb
-```
+
 
 ### Captura
 
 ![comando dig](images/04_dig.png)
 
-```text
 Vamos a añadirlo al /etc/hosts de nuestra máquina
-```
 
 ### Captura
 
