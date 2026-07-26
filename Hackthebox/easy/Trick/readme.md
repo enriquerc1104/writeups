@@ -49,8 +49,6 @@ Tenemos activos los siguientes puertos:
 - 25: smtp
 ```
 
-### Captura
-
 ![Enumeración de servicios](images/02_nmap_services.png)
 
 ---
@@ -71,44 +69,54 @@ dig @<IP> -x <IP>
 
 Vemos que el registro PTR nos ha devuelto un dominio llamado trick.htb
 
-
-### Captura
-
 ![comando dig](images/04_dig.png)
 
 Vamos a añadirlo al /etc/hosts de nuestra máquina
 
-### Captura
-
 ![/etc/hosts](images/05_etc_hosts.png)
 
-```text
+
+Ahora hacemos una transferencia de zona para ver si hay algun subdominio
+
+```bash
+dig @<IP> axfr <DOMAIN>
 ```
+Conseguimos un subdominio llamado preprod-payroll.trick.htb que también vamos a añadir al /etc/hosts
 
-### Captura
+![Transferencia de zona](images/06_axfr.png)
 
-![Enumeración de directorios](images/03_gobuster.png)
+# 🌐 Enumeración Web 2
+
+Con el dominio conseguido, probamos en el navegador a ver si conseguimos que cambie la web
+
+![web2](images/07_web2.png)
+
+En este panel vamos a probar credenciales típicas como admin:admin admin:password user:user etc... Pero no conseguiremos el acceso.
+Vamos a probar una inyeccion sql típica
+
+```sql
+or1=1
+'or'1'='1
+'or'1'='1--
+'or'1'='1-- -
+admin'or1=1
+admin'or1=1-- -
+admin'or1=1--
+admin'or'1'='1
+```
+Probando tipicas conseguimos acceso con el 'or'1'='1
+
+![admin_panel](images/08_admin_panel.png)
+
+Una vez dentro podemos ver que existe el usuario Enemigoss, un empleado que se llama john y poco mas.
 
 ---
+# Enumeración de subdominios
 
-## Tecnologías detectadas
+Como no encontramos nada, vamos a enumerar subdominios de la parte de preproduccion
+Para ello vamos a necesitar la herramienta ffuf y el directorio de diccionarios de [seclists](https://github.com/danielmiessler/seclists)
 
-- Servidor:
-- Framework:
-- CMS:
-- Versión:
 
-### Captura
-
-![Tecnologías detectadas](images/04_whatweb.png)
-
----
-
-## Hallazgos
-
--
-
----
 
 # 🎯 Acceso inicial
 
