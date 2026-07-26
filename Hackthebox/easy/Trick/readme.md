@@ -83,7 +83,7 @@ Con el dominio conseguido, probamos en el navegador a ver si conseguimos que cam
 ![web2](images/07_web2.png)
 
 En este panel vamos a probar credenciales típicas como admin:admin admin:password user:user etc... Pero no conseguiremos el acceso.
-Vamos a probar una inyeccion sql típica
+ Vamos a probar una inyeccion sql típica
 
 ```sql
 or1=1
