@@ -4,8 +4,6 @@
 |------------|------------|-------------------|
 | Hack The Box | ⭐⭐⭐⭐☆ | Linux |
 
-(images/02_nmap_services.png)
-
 ---
 
 # 📋 Información
