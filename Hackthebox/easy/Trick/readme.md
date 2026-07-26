@@ -1,5 +1,5 @@
 # Trick
-![maquina](images/00_machine.png)
+                                      ![maquina](images/00_machine.png)
 
 | Plataforma | Dificultad | Sistema Operativo |
 |------------|------------|-------------------|
