@@ -185,7 +185,12 @@ ssh -i id_rsa michael@<IP>
 ---
 # Intrusión alternativa
 
-Hay otra forma de conseguir la ejecución remota de comandos sin la id_rsa.
+## Vulnerabilidad
+
+Hay otra forma de conseguir la ejecución remota de comandos sin la id_rsa y es mediante el envenenamiento de logs (log poisoning).
+
+El Log Poisoning es una técnica de ataque que permite a un atacante manipular los archivos de registro de una aplicación web para lograr un resultado malintencionado. Esta técnica se puede utilizar en conjunto con una vulnerabilidad LFI para ejecutar comandos remotamente en el servidor.
+
 Aprovechando que tenemos el puerto 25 smtp abierto, vamos a conectarnos a el a traves de telnet.
 
 ```bash
