@@ -20,7 +20,7 @@ Actualmente el repositorio está organizado de la siguiente forma:
 
 Accede a cada colección de writeups:
 
-- 📦 [Hack The Box](./hackthebox)
+- 📦 [Hack The Box](./Hackthebox)
 - 🐳 [DockerLabs](./dockerlabs)
 - 🎓 [TryHackMe](./tryhackme)
 - 💀 [VulnHub](./vulnhub)
