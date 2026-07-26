@@ -17,14 +17,10 @@
 
 ## Descubrimiento de puertos
 
+Siempre hay que empezar escaneando los puertos de la máquina víctima
+
 ```bash
-nmap -Pn -p- --min-rate 5000 -sS -n <IP> -oN allPorts
-```
-
-### Resultado
-
-```text
-
+nmap -Pn -p- --min-rate 5000 -sS -n -vvv <IP> -oN allPorts
 ```
 
 ### Captura
@@ -38,9 +34,6 @@ nmap -Pn -p- --min-rate 5000 -sS -n <IP> -oN allPorts
 ```bash
 nmap -sCV -p<PUERTOS> <IP> -oN services
 ```
-
-### Resultado
-
 ```text
 Tenemos activos los siguientes puertos:
 - 22: ssh
