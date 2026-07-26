@@ -139,7 +139,7 @@ http://preprod-marketing.trick.htb/index.php?page=/etc/passwd
 
 En este caso no nos reporta nada
 
-
+![LFI1](images/11_LFI1.png)
 
 Vamos a probar unas técnicas de evasión. Para ello le añadiremos ....//....//....//....//....//....//etc/passwd
 
