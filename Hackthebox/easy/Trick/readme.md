@@ -23,8 +23,6 @@ Siempre hay que empezar escaneando los puertos de la máquina víctima
 nmap -Pn -p- --min-rate 5000 -sS -n -vvv <IP> -oN allPorts
 ```
 
-### Captura
-
 ![Escaneo completo de puertos](images/01_nmap_all_ports.png)
 
 ---
