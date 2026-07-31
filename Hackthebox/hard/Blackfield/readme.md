@@ -138,6 +138,21 @@ Ahora nos montamos un servidor web para poder verlos correctamente
 python3 -m http.server 80
 ```
 Y vamos a http://127.0.0.1/domain_users_by_group.html#cn_Administrators
+Aqui podemos ver los usuarios administradores del dominio
+![ldap](images/08_ldapadmin.png)
+
+Si subimos un poco veremos el usuario que tiene permisos de backup y de escritorio remoto.
+![ldap](images/09_svc_backup.png)
+
+Si supieramos la contraseña del usuario svc_backup podriamos usarlo para entrar al sistema por evil-winrm.
+
+# 🩸 Neo4j y bloodhound
+
+Vamos a usar la herramienta bloodhound que funciona con neo4j para visualizar mejor la información del active directory que corre por detrás de la máquina
+Para instalarlo en parrot podemos seguir los pasos de esta página 
+https://bloodhound.specterops.io/get-started/quickstart/community-edition-quickstart
+
+
 
 # 🌐 Enumeración web 3
 
