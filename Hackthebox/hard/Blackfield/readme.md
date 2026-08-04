@@ -1,9 +1,9 @@
 # Blackfield
 ![maquina](images/00_machine.png)
 
-| Plataforma | Rating | Sistema Operativo |
+| Plataforma | Dificultad | Sistema Operativo |
 |------------|------------|-------------------|
-| Hack The Box | ⭐⭐⭐⭐☆ | Windows |
+| Hack The Box | Hard | Windows |
 
 ---
 
