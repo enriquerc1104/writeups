@@ -1,9 +1,9 @@
 # Trick
 ![maquina](images/00_machine.png)
 
-| Plataforma | Rating | Sistema Operativo |
+| Plataforma | DIFICULTAD | Sistema Operativo |
 |------------|------------|-------------------|
-| Hack The Box | ⭐⭐⭐⭐☆ | Linux |
+| Hack The Box | Easy | Linux |
 
 ---
 
